@@ -1,3 +1,6 @@
+import time
+from datetime import date
+
 import pandas as pd
 import streamlit as st
 
@@ -14,22 +17,64 @@ except APIClientError as exc:
     st.error(str(exc))
     st.stop()
 
+POLL_INTERVAL_SECONDS = 5
+
+
+def _find_run(runs: list[dict], run_id: str | None) -> dict | None:
+    if run_id:
+        for run in runs:
+            if run.get("id") == run_id:
+                return run
+    today = date.today().isoformat()
+    for run in runs:
+        if run.get("run_date") == today:
+            return run
+    return None
+
+
 st.subheader("Manual Pipeline Trigger")
 has_resume = bool(profile.get("has_active_resume"))
 if st.button("Run Pipeline Now", disabled=not has_resume):
-    with st.spinner("Running pipeline..."):
+    with st.spinner("Starting pipeline..."):
         try:
             result = client.run_pipeline()
-            st.success(
-                f"Pipeline finished with status **{result.get('status')}** — "
-                f"{result.get('jobs_scored', 0)} jobs scored."
-            )
-            st.rerun()
+            st.session_state["pipeline_run_id"] = result.get("id")
+            st.session_state["pipeline_poll_active"] = True
         except APIClientError as exc:
             st.error(str(exc))
 
 if not has_resume:
     st.warning("Upload a resume in Settings before triggering the pipeline.")
+
+if st.session_state.get("pipeline_poll_active"):
+    try:
+        runs_payload = client.get_pipeline_runs()
+        run = _find_run(runs_payload.get("runs", []), st.session_state.get("pipeline_run_id"))
+    except APIClientError as exc:
+        st.error(str(exc))
+        st.session_state.pop("pipeline_poll_active", None)
+        run = None
+
+    if run and run.get("status") == "running":
+        st.info("Pipeline is running — fetching jobs from ~250 boards may take several minutes.")
+        time.sleep(POLL_INTERVAL_SECONDS)
+        st.rerun()
+    elif run:
+        status = run.get("status")
+        if status in ("success", "partial"):
+            st.success(
+                f"Pipeline finished with status **{status}** — "
+                f"{run.get('jobs_scored', 0)} jobs scored."
+            )
+        else:
+            st.error(
+                f"Pipeline finished with status **{status}** — "
+                f"{run.get('error_message') or 'see run history below.'}"
+            )
+        st.session_state.pop("pipeline_poll_active", None)
+        st.session_state.pop("pipeline_run_id", None)
+        time.sleep(1)
+        st.rerun()
 
 st.subheader("LLM Usage")
 try:
