@@ -1,25 +1,35 @@
 import streamlit as st
 
 from api_client import APIClientError
-from components.auth import require_login
 from components.constants import COUNTRY_OPTIONS, SALARY_CURRENCIES, TARGET_ROLES
+from components.layout import page_setup
 
-st.set_page_config(page_title="Settings", layout="wide")
-st.title("Settings")
-
-client = require_login()
+client = page_setup("Settings")
 if client is None:
-    st.stop()
+    raise SystemExit
 
 try:
     profile = client.get_profile()
     llm_status = client.llm_status()
+    blacklists = client.get_blacklists()
 except APIClientError as exc:
     st.error(str(exc))
     st.stop()
 
-step_labels = ["1. Upload Resume", "2. Preferences", "3. API Keys"]
-tabs = st.tabs(step_labels)
+tabs = st.tabs(
+    ["1. Upload Resume", "2. Preferences", "3. Blacklists", "4. API Keys", "5. Skill Gap"]
+)
+
+
+def _normalize_multiselect_defaults(values: list[str], options: list[str]) -> list[str]:
+    """Map profile values onto widget options (case-insensitive), dropping unknowns."""
+    lookup = {option.lower(): option for option in options}
+    normalized: list[str] = []
+    for value in values or []:
+        canonical = lookup.get(value.lower())
+        if canonical and canonical not in normalized:
+            normalized.append(canonical)
+    return normalized
 
 with tabs[0]:
     st.subheader("Upload Master Resume")
@@ -45,20 +55,24 @@ with tabs[1]:
     st.subheader("Job Preferences")
 
     nationality_options = ["", *COUNTRY_OPTIONS.keys()]
-    nationality_labels = ["Not set", *[COUNTRY_OPTIONS[code] for code in COUNTRY_OPTIONS]]
     current_nationality = profile.get("nationality") or ""
-    nationality_index = nationality_options.index(current_nationality) if current_nationality in nationality_options else 0
+    nationality_index = (
+        nationality_options.index(current_nationality) if current_nationality in nationality_options else 0
+    )
 
     preferred_countries = st.multiselect(
         "Preferred countries (empty = all countries)",
         options=list(COUNTRY_OPTIONS.keys()),
-        default=profile.get("preferred_countries", []),
+        default=_normalize_multiselect_defaults(
+            profile.get("preferred_countries", []),
+            list(COUNTRY_OPTIONS.keys()),
+        ),
         format_func=lambda code: f"{code} — {COUNTRY_OPTIONS[code]}",
     )
     preferred_roles = st.multiselect(
         "Preferred roles",
         options=TARGET_ROLES,
-        default=profile.get("preferred_roles", []),
+        default=_normalize_multiselect_defaults(profile.get("preferred_roles", []), TARGET_ROLES),
     )
     nationality = st.selectbox(
         "Nationality (home country for visa scoring bypass)",
@@ -108,24 +122,97 @@ with tabs[1]:
             st.error(str(exc))
 
 with tabs[2]:
+    st.subheader("Blacklists")
+    st.caption("Jobs matching these filters are removed before scoring on the next pipeline run.")
+
+    companies = st.text_area(
+        "Blacklisted companies (one per line)",
+        value="\n".join(blacklists.get("blacklisted_companies", [])),
+        height=120,
+    )
+    roles = st.text_area(
+        "Blacklisted role patterns (one per line)",
+        value="\n".join(blacklists.get("blacklisted_roles", [])),
+        height=120,
+    )
+    locations = st.multiselect(
+        "Blacklisted locations (ISO-2)",
+        options=list(COUNTRY_OPTIONS.keys()),
+        default=blacklists.get("blacklisted_locations", []),
+        format_func=lambda code: f"{code} — {COUNTRY_OPTIONS[code]}",
+    )
+
+    if st.button("Save Blacklists", key="save_blacklists"):
+        payload = {
+            "blacklisted_companies": [line.strip() for line in companies.splitlines() if line.strip()],
+            "blacklisted_roles": [line.strip() for line in roles.splitlines() if line.strip()],
+            "blacklisted_locations": locations,
+        }
+        try:
+            client.update_blacklists(payload)
+            st.success("Blacklists saved.")
+            st.rerun()
+        except APIClientError as exc:
+            st.error(str(exc))
+
+with tabs[3]:
     st.subheader("LLM API Keys")
     st.caption(
         "API keys are configured in `.env` at deploy time. "
         "The dashboard only shows whether each provider is configured."
     )
 
-    anthropic_ok = llm_status.get("anthropic_configured")
-    openai_ok = llm_status.get("openai_configured")
-
-    if anthropic_ok:
+    if llm_status.get("anthropic_configured"):
         st.success("Anthropic API key configured")
     else:
         st.warning("Anthropic API key missing")
 
-    if openai_ok:
+    if llm_status.get("openai_configured"):
         st.success("OpenAI API key configured")
     else:
         st.info("OpenAI fallback key not configured")
+
+with tabs[4]:
+    st.subheader("Skill Gap Reports")
+    st.caption(
+        "Skills required in jobs you're a reasonable fit for (fit score ≥ 50) "
+        "but missing from your resume. Generated automatically on Fridays (weekly) "
+        "and at month-end (monthly)."
+    )
+    try:
+        reports = client.get_skill_gap_reports()
+    except APIClientError as exc:
+        st.error(str(exc))
+    else:
+
+        def _render_report(label: str, report: dict | None) -> None:
+            st.markdown(f"**{label}**")
+            if not report or not report.get("top_missing_skills"):
+                st.info(f"No {label.lower()} report yet.")
+                return
+            st.caption(
+                f"Period: {report.get('period_start', '—')} → {report.get('period_end', '—')} "
+                f"({report.get('total_jobs_analysed', 0)} jobs analysed)"
+            )
+            rows = report["top_missing_skills"]
+            st.dataframe(
+                [
+                    {
+                        "Skill": row.get("skill"),
+                        "Jobs": row.get("job_count"),
+                        "Avg score": row.get("avg_score"),
+                    }
+                    for row in rows
+                ],
+                use_container_width=True,
+                hide_index=True,
+            )
+
+        left, right = st.columns(2)
+        with left:
+            _render_report("Weekly", reports.get("weekly"))
+        with right:
+            _render_report("Monthly", reports.get("monthly"))
 
     if not profile.get("has_active_resume"):
         st.warning("Upload a resume before running the pipeline.")
