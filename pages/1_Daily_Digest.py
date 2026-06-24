@@ -20,17 +20,22 @@ except APIClientError as exc:
 if digest:
     st.subheader(f"Digest — {digest.get('digest_date')}")
     st.text(digest.get("content_text", ""))
+else:
+    st.info(
+        "No digest summary for today yet. "
+        "Matched jobs still appear below after you run the pipeline."
+    )
 
 st.subheader("Today's Opportunities")
 try:
-    opportunities = client.list_opportunities(min_score=60, page_size=50)
+    opportunities = client.list_opportunities(min_score=30, page_size=50)
 except APIClientError as exc:
     st.error(str(exc))
     st.stop()
 
 items = opportunities.get("items", [])
 if not items:
-    st.info("No scored opportunities with score ≥ 60 yet.")
+    st.info("No scored opportunities with score ≥ 30 yet.")
 else:
     for item in items:
         render_opportunity_card(client, item, key_prefix="digest")

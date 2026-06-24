@@ -33,13 +33,42 @@ def _normalize_multiselect_defaults(values: list[str], options: list[str]) -> li
 
 with tabs[0]:
     st.subheader("Upload Master Resume")
-    st.caption("Upload a `.pdf` or `.docx` resume. The backend extracts text and parses skills once.")
+    st.caption(
+        "The backend extracts text and parses skills once. "
+        "If file upload shows **AxiosError: Network Error**, use the paste option below "
+        "(common in embedded browsers or when not using `http://localhost:8501`)."
+    )
 
     if profile.get("has_active_resume"):
         st.success("Active resume on file.")
         if profile.get("parsed_skills"):
             st.write("Parsed skills:", ", ".join(profile["parsed_skills"]))
+        else:
+            st.warning(
+                "No skills were detected in your resume. "
+                "Re-upload with a clear Skills section, or run the pipeline anyway — "
+                "scores may be lower until skills are parsed."
+            )
 
+    st.markdown("**Option A — paste resume text** (recommended if file upload fails)")
+    pasted_resume = st.text_area(
+        "Resume text",
+        height=220,
+        placeholder="Paste your full resume text here...",
+        label_visibility="collapsed",
+    )
+    if st.button("Parse Pasted Resume", key="upload_resume_text", disabled=not pasted_resume.strip()):
+        with st.spinner("Parsing resume with LLM..."):
+            try:
+                result = client.upload_resume_text(pasted_resume.strip())
+                st.success(f"Resume saved: {result['filename']}")
+                st.write("Skills:", ", ".join(result.get("skills", [])))
+                st.rerun()
+            except APIClientError as exc:
+                st.error(str(exc))
+
+    st.markdown("**Option B — upload `.pdf` or `.docx`**")
+    st.caption("Open the app at http://localhost:8501 (not the Network URL) if this fails.")
     uploaded = st.file_uploader("Resume file", type=["pdf", "docx"])
     if uploaded is not None and st.button("Upload and Parse Resume", key="upload_resume"):
         with st.spinner("Uploading and parsing resume..."):
@@ -171,6 +200,26 @@ with tabs[3]:
         st.success("OpenAI API key configured")
     else:
         st.info("OpenAI fallback key not configured")
+
+    if llm_status.get("opencode_configured"):
+        model = llm_status.get("opencode_model") or "default"
+        st.success(f"OpenCode Zen API key configured (model: {model})")
+    else:
+        st.info("OpenCode Zen key not configured")
+
+    if llm_status.get("local_llm_configured"):
+        model = llm_status.get("local_llm_model") or "default"
+        st.success(f"Local LLM configured (Ollama model: {model})")
+    else:
+        st.info("Local LLM not configured (set LOCAL_LLM_BASE_URL for free Ollama)")
+
+    parser_mode = llm_status.get("resume_parser_mode", "auto")
+    if parser_mode == "heuristic":
+        st.success("Resume parser: free heuristic mode (no API)")
+    elif parser_mode == "auto":
+        st.info("Resume parser: auto (tries LLM, falls back to free heuristic)")
+    else:
+        st.warning("Resume parser: LLM only (requires paid API key)")
 
 with tabs[4]:
     st.subheader("Skill Gap Reports")

@@ -16,7 +16,9 @@ except APIClientError as exc:
 versions = payload.get("versions", [])
 if not versions:
     st.info(
-        "No tailored resumes yet. Approve an opportunity to generate one."
+        "No tailored resumes yet. Go to **Daily Digest**, find a job you like, "
+        "and click **Approve** — a resume version is created for that role. "
+        "Without a paid LLM key, a copy of your master resume is saved instead of an AI-tailored version."
     )
     st.stop()
 

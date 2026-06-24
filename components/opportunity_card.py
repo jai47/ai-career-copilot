@@ -19,7 +19,7 @@ def render_opportunity_card(client: APIClient, opportunity: dict, *, key_prefix:
     score = opportunity.get("overall_score", 0)
     classification = opportunity.get("classification", "")
     feedback = opportunity.get("user_feedback")
-    optional = 60 <= (score or 0) < 70
+    optional = 30 <= (score or 0) < 60
 
     header = (
         f"**{opportunity.get('title')}** @ {opportunity.get('company')} "
@@ -47,7 +47,7 @@ def render_opportunity_card(client: APIClient, opportunity: dict, *, key_prefix:
     if action_cols[0].button("Approve", key=f"{key_prefix}-approve-{opportunity['id']}"):
         try:
             client.approve_opportunity(opportunity["id"])
-            st.success("Approved — tailored resume generated.")
+            st.success("Approved — resume version saved (tailored when LLM is available).")
             st.rerun()
         except APIClientError as exc:
             st.error(str(exc))

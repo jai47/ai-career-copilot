@@ -3,12 +3,31 @@
 from __future__ import annotations
 
 import os
+import socket
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 import requests
+from dotenv import load_dotenv
 
-API_URL = os.getenv("API_URL", "http://localhost:8000").rstrip("/")
+# Load repo-root .env before reading API_URL (streamlit is often started from frontend/).
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+
+def _resolve_api_url() -> str:
+    """Return API base URL, falling back to localhost when Docker hostname is unreachable."""
+    configured = os.getenv("API_URL", "http://localhost:8000").rstrip("/")
+    host = configured.split("://", 1)[-1].split("/", 1)[0].split(":", 1)[0]
+    if host == "api":
+        try:
+            socket.gethostbyname(host)
+        except socket.gaierror:
+            return "http://localhost:8000"
+    return configured
+
+
+API_URL = _resolve_api_url()
 
 
 class APIClientError(Exception):
@@ -76,6 +95,12 @@ class APIClient:
                 json=payload,
                 timeout=timeout,
             )
+        except requests.ConnectionError as exc:
+            raise APIClientError(
+                f"Cannot reach backend at {API_URL}. "
+                "Is the API server running? For local dev, set API_URL=http://localhost:8000 in .env.",
+                code="CONNECTION_ERROR",
+            ) from exc
         except requests.Timeout as exc:
             raise APIClientError(
                 "Request timed out. The server may still be processing — refresh Pipeline Status.",
@@ -84,12 +109,24 @@ class APIClient:
         return self._handle_response(response)
 
     def post_file(self, path: str, filename: str, content: bytes) -> Any:
-        response = requests.post(
-            f"{API_URL}{path}",
-            headers={"Authorization": f"Bearer {self.token}"} if self.token else {},
-            files={"file": (filename, content)},
-            timeout=120,
-        )
+        try:
+            response = requests.post(
+                f"{API_URL}{path}",
+                headers={"Authorization": f"Bearer {self.token}"} if self.token else {},
+                files={"file": (filename, content)},
+                timeout=120,
+            )
+        except requests.ConnectionError as exc:
+            raise APIClientError(
+                f"Cannot reach backend at {API_URL}. "
+                "Is the API server running? For local dev, set API_URL=http://localhost:8000 in .env.",
+                code="CONNECTION_ERROR",
+            ) from exc
+        except requests.Timeout as exc:
+            raise APIClientError(
+                "Upload timed out. Try again or use a smaller resume file.",
+                code="TIMEOUT",
+            ) from exc
         return self._handle_response(response)
 
     def get_bytes(self, path: str) -> bytes:
@@ -122,6 +159,9 @@ class APIClient:
 
     def upload_resume(self, filename: str, content: bytes) -> dict[str, Any]:
         return self.post_file("/users/me/resume", filename, content)
+
+    def upload_resume_text(self, text: str) -> dict[str, Any]:
+        return self.post("/users/me/resume/text", {"text": text}, timeout=180)
 
     def llm_status(self) -> dict[str, Any]:
         return self.get("/config/llm-status")

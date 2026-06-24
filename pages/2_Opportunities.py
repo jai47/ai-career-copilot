@@ -15,7 +15,11 @@ if "selected_opportunity_id" not in st.session_state:
 
 with st.sidebar:
     st.subheader("Filters")
-    country = st.text_input("Country (ISO-2)", value="").upper() or None
+    country = st.text_input(
+        "Country (ISO-2)",
+        value="",
+        help="Two-letter code, e.g. IN for India, US, SG — not full country names.",
+    ).upper() or None
     visa_status = st.selectbox(
         "Visa status",
         options=["", "available", "likely", "unknown", "unlikely", "none"],
@@ -109,4 +113,9 @@ if items:
             if detail.get("url"):
                 st.link_button("Open job posting", detail["url"])
 else:
-    st.info("No opportunities match your filters.")
+    st.info(
+        "No opportunities match your filters. "
+        "Clear the country filter (use **IN**, not INDIA), lower the minimum score, "
+        "and turn off the digest date filter. "
+        "Then run the pipeline from **Pipeline Status** if you have not scored jobs today."
+    )
