@@ -1,3 +1,5 @@
+# Deprecated: use the root Dockerfile instead.
+# Frontend and backend run together via: docker compose up --build
 FROM python:3.11-slim
 WORKDIR /app
 COPY requirements.txt .

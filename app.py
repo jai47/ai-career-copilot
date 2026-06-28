@@ -4,7 +4,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from api_client import APIClient, APIClientError
-from components.auth import render_login
+from components.auth import render_auth_gate
 
 load_dotenv()
 
@@ -21,7 +21,7 @@ if "token" not in st.session_state:
             st.warning(f"Backend reachable but degraded: {health}")
     except APIClientError as exc:
         st.error(f"Cannot reach backend at {api_url}: {exc}")
-    render_login()
+    render_auth_gate()
     st.stop()
 
 st.sidebar.title("AI Career Copilot")

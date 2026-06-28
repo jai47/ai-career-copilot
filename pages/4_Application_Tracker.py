@@ -24,7 +24,11 @@ except APIClientError as exc:
 
 applications = payload.get("applications", [])
 if not applications:
-    st.info("No applications yet. Approve opportunities from the Daily Digest.")
+    st.info(
+        "No applications yet. Approve opportunities from the Daily Digest. "
+        "This app does **not** auto-fill or submit job applications — you apply manually "
+        "using the tailored resume from **Resume Versions**."
+    )
     st.stop()
 
 if "tracker_selected_id" not in st.session_state and applications:

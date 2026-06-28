@@ -151,6 +151,15 @@ class APIClient:
     def login(self, email: str, password: str) -> dict[str, Any]:
         return self.post("/auth/login", {"email": email, "password": password})
 
+    def auth_status(self) -> dict[str, Any]:
+        return self.get("/auth/status")
+
+    def setup_account(self, name: str, email: str, password: str) -> dict[str, Any]:
+        return self.post(
+            "/auth/setup",
+            {"name": name, "email": email, "password": password},
+        )
+
     def get_profile(self) -> dict[str, Any]:
         return self.get("/users/me")
 
