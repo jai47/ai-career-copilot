@@ -10,6 +10,7 @@ import { approveOpportunity, listOpportunities, rejectOpportunity, skipOpportuni
 import { ApiError } from '../api/client';
 import OpportunityCard from '../components/OpportunityCard';
 import OpportunityDetailDrawer from '../components/OpportunityDetailDrawer';
+import DigestBrief from '../components/DigestBrief';
 import { EmptyState, ErrorState, LoadingState } from '../components/ui/AsyncStates';
 import PageHeader from '../components/ui/PageHeader';
 import type { DigestResponse, OpportunitySummary } from '../types';
@@ -161,9 +162,7 @@ export default function DailyDigest() {
             Settings.
           </div>
         ) : (
-          <pre className="sophisticated-card p-8 text-[15px] whitespace-pre-wrap text-ink leading-relaxed overflow-x-auto tracking-[-0.01em]">
-            {digest.data.content_text}
-          </pre>
+          <DigestBrief digest={digest.data} />
         )}
         {digest.error && <ErrorState message={digest.error} onRetry={digest.refetch} />}
       </section>
