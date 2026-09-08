@@ -1,0 +1,6 @@
+{
+  "name": "AI Career Copilot",
+  "description": "An AI-powered career strategy companion to curate opportunities, optimize resumes, track applications, and manage pipelines.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,360 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-serif: "Outfit", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Apple-inspired neutrals */
+  --color-canvas: #f5f5f7;
+  --color-surface: #ffffff;
+  --color-ink: #1d1d1f;
+  --color-muted: #86868b;
+  --color-line: #d2d2d7;
+  --color-accent: #0071e3;
+  --color-accent-hover: #0077ed;
+  --color-accent-soft: #e8f1fc;
+  --color-soft: #f5f5f7;
+}
+
+:root {
+  color-scheme: light;
+  --nav-width: 240px;
+  --topbar-height: 52px;
+  --ease-apple: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.47059;
+  letter-spacing: -0.022em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-accent) 22%, white);
+  color: var(--color-ink);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #c7c7cc;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #aeaeb2;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* ——— Shared surfaces ——— */
+.sophisticated-border {
+  border-color: var(--color-line);
+}
+
+.sophisticated-card,
+.ui-panel {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
+  box-shadow: none;
+  transition: border-color 0.2s var(--ease-apple), background-color 0.2s var(--ease-apple);
+}
+
+.sophisticated-card:hover {
+  border-color: #b8b8bd;
+}
+
+.ui-btn-primary {
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: 980px;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  padding: 0.7rem 1.35rem;
+  transition: background-color 0.2s var(--ease-apple);
+}
+
+.ui-btn-primary:hover {
+  background: var(--color-accent-hover);
+}
+
+.ui-btn-secondary {
+  background: transparent;
+  color: var(--color-accent);
+  border: none;
+  border-radius: 980px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* ——— Global form controls ——— */
+input:not([type='checkbox']):not([type='radio']):not([type='range']),
+textarea,
+select {
+  font-family: inherit;
+  letter-spacing: inherit;
+  border-radius: 12px !important;
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-line) !important;
+  color: var(--color-ink) !important;
+  transition: border-color 0.2s var(--ease-apple), box-shadow 0.2s var(--ease-apple);
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='range']):focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 20%, transparent);
+}
+
+/* Soften dense mono/uppercase dashboard chrome */
+.font-mono {
+  font-family: var(--font-sans) !important;
+  letter-spacing: -0.01em;
+}
+
+/* Page rhythm */
+.page-title {
+  font-size: clamp(2rem, 3.2vw, 2.75rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--color-ink);
+}
+
+.page-subtitle {
+  margin-top: 0.5rem;
+  font-size: 1.0625rem;
+  font-weight: 400;
+  color: var(--color-muted);
+  letter-spacing: -0.01em;
+  max-width: 36rem;
+}
+
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.apple-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: opacity 0.2s var(--ease-apple);
+}
+.apple-link:hover {
+  opacity: 0.75;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ——— Visual coach tour / glow (black, minimal) ——— */
+@keyframes coach-ring-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1.5px rgba(29, 29, 31, 0.92),
+      0 0 0 5px rgba(0, 0, 0, 0.12),
+      0 0 22px 2px rgba(0, 0, 0, 0.28),
+      0 0 0 9999px rgba(0, 0, 0, 0.48);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1.5px rgba(29, 29, 31, 0.98),
+      0 0 0 7px rgba(0, 0, 0, 0.1),
+      0 0 28px 4px rgba(0, 0, 0, 0.34),
+      0 0 0 9999px rgba(0, 0, 0, 0.48);
+  }
+}
+
+@keyframes coach-thinking-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.65; }
+}
+
+@keyframes coach-redirect-sweep {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.coach-spotlight-root {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.coach-spotlight-dim {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.coach-spotlight-ring {
+  position: fixed;
+  border-radius: 14px;
+  pointer-events: none;
+  z-index: 10001;
+  animation: coach-ring-pulse 2s ease-in-out infinite;
+  border: 1.5px solid rgba(29, 29, 31, 0.9);
+  background: transparent;
+}
+
+.coach-spotlight-tip {
+  position: fixed;
+  z-index: 10002;
+  pointer-events: auto;
+  width: min(320px, calc(100vw - 32px));
+  max-height: min(280px, calc(100vh - 32px));
+  overflow: auto;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+.coach-thinking-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  pointer-events: none;
+  background:
+    radial-gradient(520px 360px at 85% 90%, rgba(0, 0, 0, 0.14), transparent 60%),
+    radial-gradient(380px 280px at 50% 50%, rgba(0, 0, 0, 0.06), transparent 70%);
+  animation: coach-thinking-pulse 1.4s ease-in-out infinite;
+}
+
+.coach-redirect-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 9995;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.1), transparent 42%);
+  animation: coach-redirect-sweep 0.7s ease-out forwards;
+}
+
+.coach-redirect-bar {
+  width: 100%;
+  height: 2px;
+  transform-origin: left center;
+  background: linear-gradient(90deg, transparent, #1d1d1f 20%, #1d1d1f 80%, transparent);
+  box-shadow: 0 0 12px 1px rgba(0, 0, 0, 0.35);
+}
+
+.coach-redirect-label {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1d1d1f;
+}
+
+/* Outline only — never raise z-index (that covered the tip on large targets). */
+[data-coach-id].coach-target-active {
+  outline: none;
+}
+
+/* ——— Resume visual (TipTap) editor ——— */
+.resume-visual-editor {
+  font-family: "Times New Roman", Times, Georgia, serif;
+  color: #1d1d1f;
+  line-height: 1.4;
+}
+
+.resume-visual-editor h1 {
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 6px;
+}
+
+.resume-visual-editor h2 {
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #1d1d1f;
+  padding-bottom: 2px;
+  margin: 16px 0 8px;
+  font-weight: 600;
+}
+
+.resume-visual-editor p {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+}
+
+.resume-visual-editor ul {
+  margin: 4px 0 10px;
+  padding-left: 1.2em;
+}
+
+.resume-visual-editor li {
+  font-size: 12.5px;
+  margin: 2px 0;
+}
+
+.resume-visual-editor table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 6px 0 4px;
+  table-layout: fixed;
+}
+
+.resume-visual-editor td,
+.resume-visual-editor th {
+  border: 1px solid #d8d8d8;
+  padding: 6px 8px;
+  font-size: 12.5px;
+  vertical-align: top;
+  background: #fafafa;
+}
+
+.resume-visual-editor .selectedCell {
+  background: #e8f1ff;
+}
+
+.resume-visual-editor mark {
+  border-radius: 2px;
+  padding: 0 2px;
+}
