@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import HealthBanner from '../components/HealthBanner';
 import FollowUpDrawer from '../components/FollowUpDrawer';
 
 const TITLES: Record<string, string> = {
@@ -50,7 +49,6 @@ export default function AppLayout() {
       <div className="flex-1 min-h-screen ml-[var(--nav-width)] pt-[var(--topbar-height)] flex flex-col transition-all duration-300">
         <Header title={title} onFollowUp={(id) => setFollowUpAppId(id)} />
         <main className="flex-1 px-8 py-10 md:px-12 md:py-12 w-full max-w-[1080px] mx-auto">
-          <HealthBanner />
           <Outlet />
         </main>
       </div>

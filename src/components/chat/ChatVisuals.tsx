@@ -230,20 +230,22 @@ export function CoachAvatar({
 }) {
   const dim = size === 'lg' ? 'w-14 h-14' : size === 'sm' ? 'w-8 h-8' : 'w-10 h-10';
   return (
-    <div className={`relative shrink-0 ${dim}`}>
-      <div
-        className={`absolute inset-0 rounded-full bg-gradient-to-br ${MOOD_RING[mood] || MOOD_RING.neutral} ${
-          speaking ? 'animate-pulse' : ''
-        }`}
-      />
-      <div className="absolute inset-[2px] rounded-full bg-surface flex items-center justify-center">
-        <span className="text-[13px] font-semibold tracking-tight text-ink">AI</span>
+    <div className="inline-flex items-end gap-1.5 shrink-0">
+      <div className={`relative ${dim}`}>
+        <div
+          className={`absolute inset-0 rounded-full bg-gradient-to-br ${MOOD_RING[mood] || MOOD_RING.neutral} ${
+            speaking ? 'animate-pulse' : ''
+          }`}
+        />
+        <div className="absolute inset-[2px] rounded-full bg-surface flex items-center justify-center">
+          <span className="text-[13px] font-semibold tracking-tight text-ink">AI</span>
+        </div>
       </div>
       {speaking && (
-        <span className="absolute -bottom-0.5 -right-0.5 flex gap-0.5">
-          <span className="w-1 h-1 rounded-full bg-accent animate-bounce [animation-delay:0ms]" />
-          <span className="w-1 h-1 rounded-full bg-accent animate-bounce [animation-delay:150ms]" />
-          <span className="w-1 h-1 rounded-full bg-accent animate-bounce [animation-delay:300ms]" />
+        <span className="flex items-center gap-0.5 pb-1" aria-hidden>
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:0ms]" />
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:150ms]" />
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:300ms]" />
         </span>
       )}
     </div>

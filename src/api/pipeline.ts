@@ -15,6 +15,13 @@ export function triggerPipelineRun(
   return apiPost<PipelineRunResponse>(token, '/pipeline/run', undefined, signal, 30_000);
 }
 
+export function continuePipelineRun(
+  token: string,
+  signal?: AbortSignal,
+): Promise<PipelineRunResponse> {
+  return apiPost<PipelineRunResponse>(token, '/pipeline/continue', undefined, signal, 30_000);
+}
+
 export function cancelPipelineRun(
   token: string,
   signal?: AbortSignal,

@@ -5,6 +5,7 @@ import BlacklistsTab from './settings/BlacklistsTab';
 import LLMStatusTab from './settings/LLMStatusTab';
 import SkillGapTab from './settings/SkillGapTab';
 import CoverLetterAnglesTab from './settings/CoverLetterAnglesTab';
+import UsageTab from './settings/UsageTab';
 import PageHeader from './ui/PageHeader';
 
 const TABS = [
@@ -12,6 +13,7 @@ const TABS = [
   { id: 'resume', label: 'Resume' },
   { id: 'coverletter', label: 'Cover letter' },
   { id: 'blacklists', label: 'Blacklists' },
+  { id: 'usage', label: 'Usage' },
   { id: 'llm', label: 'API keys' },
   { id: 'skillgap', label: 'Skill gap' },
 ] as const;
@@ -23,7 +25,7 @@ export default function Settings() {
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Settings." subtitle="Preferences, keys, and profile details." />
+      <PageHeader title="Settings." subtitle="Preferences, usage, keys, and profile details." />
 
       <div data-coach-id="settings-tabs" className="flex flex-wrap gap-2 pb-2">
         {TABS.map((tab) => (
@@ -50,6 +52,7 @@ export default function Settings() {
         {activeTab === 'resume' && <ResumeUploadTab />}
         {activeTab === 'coverletter' && <CoverLetterAnglesTab />}
         {activeTab === 'blacklists' && <BlacklistsTab />}
+        {activeTab === 'usage' && <UsageTab />}
         {activeTab === 'llm' && <LLMStatusTab />}
         {activeTab === 'skillgap' && <SkillGapTab />}
       </div>

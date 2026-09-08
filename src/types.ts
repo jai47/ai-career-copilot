@@ -22,6 +22,8 @@ export interface LoginResponse {
   user_id: string;
   name: string;
   email: string;
+  is_admin?: boolean;
+  token_balance?: number;
 }
 
 export interface UserProfileResponse {
@@ -42,6 +44,9 @@ export interface UserProfileResponse {
   cover_letter_angles: Record<string, string>;
   notify_digest_email: boolean;
   notify_followup_email: boolean;
+  is_admin?: boolean;
+  token_balance?: number;
+  preferred_llm_provider?: string | null;
 }
 
 export interface UserProfileUpdate {
@@ -414,6 +419,61 @@ export interface LLMUsageResponse {
   total_prompt_tokens: number;
   total_completion_tokens: number;
   estimated_cost_usd: number;
+  budget_usd: number;
+  remaining_usd: number;
+  token_balance?: number;
+  spent_today_tokens?: number;
+}
+
+export interface BillingRates {
+  pipeline_run_tokens: number;
+  llm_call_tokens: number;
+  signup_grant_tokens: number;
+  usd_per_thousand_tokens: number;
+}
+
+export interface UsageDayPoint {
+  date: string;
+  spent: number;
+}
+
+export interface BillingUsageResponse {
+  token_balance: number;
+  spent_today: number;
+  daily_generation_used: number;
+  daily_generation_limit: number;
+  rates: BillingRates;
+  series: UsageDayPoint[];
+  request_tokens_hint: string;
+}
+
+export interface UserLlmModelOption {
+  id: string;
+  label: string;
+}
+
+export interface UserLlmProviderStatus {
+  id: string;
+  label: string;
+  byok_supported: boolean;
+  configured: boolean;
+  key_hint: string | null;
+  model: string | null;
+  models: UserLlmModelOption[];
+  env_keys: string[];
+}
+
+export interface UserLlmKeysResponse {
+  preferred_provider: string;
+  providers: UserLlmProviderStatus[];
+}
+
+export interface AdminUserRow {
+  id: string;
+  name: string;
+  email: string;
+  token_balance: number;
+  is_admin: boolean;
 }
 
 export type PipelineStageKey =

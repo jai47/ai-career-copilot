@@ -55,7 +55,11 @@ export default function NotificationBell({ onFollowUp }: NotificationBellProps) 
       }
     }
     setOpen(false);
-    const link = item.link_path ?? '/tracker';
+    const link = item.link_path ?? (item.type === 'pipeline_status' ? '/status' : '/tracker');
+    if (item.type === 'pipeline_status') {
+      navigate('/status');
+      return;
+    }
     const appMatch = link.match(/application=([a-f0-9-]+)/i);
     if (item.type === 'follow_up' && appMatch && onFollowUp) {
       onFollowUp(appMatch[1]);

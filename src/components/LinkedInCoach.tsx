@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Puzzle } from 'lucide-react';
+import { Copy, Download, Puzzle, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAsync } from '../hooks/useAsync';
 import {
@@ -10,6 +10,8 @@ import { API_URL, ApiError } from '../api/client';
 import type { LinkedInProfileAnalysisResponse } from '../types';
 import { EmptyState, ErrorState, LoadingState } from './ui/AsyncStates';
 import FindNetworkPanel from './FindNetworkPanel';
+
+const EXTENSION_ZIP_URL = '/downloads/career-copilot-chrome-extension.zip';
 
 function AnalysisView({ data }: { data: LinkedInProfileAnalysisResponse }) {
   return (
@@ -84,6 +86,7 @@ export default function LinkedInCoach() {
   const [error, setError] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<LinkedInProfileAnalysisResponse | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
 
   const saved = useAsync(
     async (signal) => {
@@ -141,33 +144,42 @@ export default function LinkedInCoach() {
         </p>
       </div>
 
-      <section className="sophisticated-card p-6 space-y-3">
+      <section className="sophisticated-card p-6 space-y-4">
         <div className="flex items-center gap-2 text-accent">
           <Puzzle className="w-4 h-4" strokeWidth={1.75} />
           <h3 className="section-label">Chrome extension</h3>
         </div>
-        <ol className="text-[14px] text-muted list-decimal list-inside space-y-1.5">
-          <li>
-            Load unpacked extension from <code className="text-accent">chrome-extension/</code> in
-            this repo
-          </li>
-          <li>Paste API URL + bearer token below into the extension popup</li>
-          <li>
-            On LinkedIn: analyze your profile, or import people from search / company People pages
-          </li>
-        </ol>
+        <p className="text-[14px] text-muted leading-relaxed">
+          Analyze your profile and import people from LinkedIn without sharing your LinkedIn
+          password. Chrome blocks one-click installs from websites for security — download the zip,
+          then follow the short guide (about 30 seconds).
+        </p>
         <div className="flex flex-wrap gap-2">
+          <a
+            href={EXTENSION_ZIP_URL}
+            download="career-copilot-chrome-extension.zip"
+            className="text-[14px] font-medium px-3 py-2 rounded-xl bg-ink text-white inline-flex items-center gap-1.5"
+          >
+            <Download className="w-3.5 h-3.5" /> Download extension
+          </a>
+          <button
+            type="button"
+            onClick={() => setShowInstallGuide(true)}
+            className="text-[14px] font-medium px-3 py-2 rounded-xl border border-line text-ink inline-flex items-center gap-1.5 hover:bg-soft"
+          >
+            Install guide
+          </button>
           <button
             type="button"
             onClick={() => copyValue('api', API_URL)}
-            className="text-[14px] font-medium px-3 py-2 border border-line text-slate-600 inline-flex items-center gap-1"
+            className="text-[14px] font-medium px-3 py-2 rounded-xl border border-line text-slate-600 inline-flex items-center gap-1"
           >
             <Copy className="w-3 h-3" /> Copy API URL
           </button>
           <button
             type="button"
             onClick={() => token && copyValue('token', token)}
-            className="text-[14px] font-medium px-3 py-2 border border-line text-slate-600 inline-flex items-center gap-1"
+            className="text-[14px] font-medium px-3 py-2 rounded-xl border border-line text-slate-600 inline-flex items-center gap-1"
           >
             <Copy className="w-3 h-3" /> Copy bearer token
           </button>
@@ -176,6 +188,98 @@ export default function LinkedInCoach() {
           )}
         </div>
       </section>
+
+      {showInstallGuide && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/40"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="extension-install-title"
+          onClick={() => setShowInstallGuide(false)}
+        >
+          <div
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-surface border border-line shadow-xl p-5 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 id="extension-install-title" className="text-base font-medium text-ink">
+                  Add Career Copilot to Chrome
+                </h3>
+                <p className="text-[12px] text-muted mt-0.5">
+                  Unpacked install — no Chrome Web Store listing required.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowInstallGuide(false)}
+                className="p-1 rounded-full text-muted hover:text-ink hover:bg-soft"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <ol className="space-y-3 text-[14px] text-ink list-decimal list-inside">
+              <li>
+                <a
+                  href={EXTENSION_ZIP_URL}
+                  download="career-copilot-chrome-extension.zip"
+                  className="text-accent underline underline-offset-2 font-medium"
+                >
+                  Download the extension zip
+                </a>{' '}
+                and unzip it to a folder (keep that folder).
+              </li>
+              <li>
+                Open{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard.writeText('chrome://extensions');
+                    setCopied('chrome://extensions');
+                    setTimeout(() => setCopied(null), 2000);
+                  }}
+                  className="font-mono text-[13px] text-accent underline underline-offset-2"
+                >
+                  chrome://extensions
+                </button>{' '}
+                (click to copy, then paste in Chrome’s address bar).
+              </li>
+              <li>
+                Turn on <span className="font-medium">Developer mode</span> (top right).
+              </li>
+              <li>
+                Click <span className="font-medium">Load unpacked</span> and select the unzipped
+                folder (it must contain <span className="font-mono text-[12px]">manifest.json</span>
+                ).
+              </li>
+              <li>
+                Open the extension popup → paste API URL + bearer token (buttons on this page) →
+                Save.
+              </li>
+              <li>On LinkedIn, use the extension to analyze your profile or import people.</li>
+            </ol>
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              <a
+                href={EXTENSION_ZIP_URL}
+                download="career-copilot-chrome-extension.zip"
+                className="text-[14px] font-medium px-3 py-2 rounded-xl bg-ink text-white inline-flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5" /> Download zip
+              </a>
+              <button
+                type="button"
+                onClick={() => setShowInstallGuide(false)}
+                className="text-[14px] font-medium px-3 py-2 rounded-xl border border-line text-muted"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <section className="space-y-3">
         <h3 className="section-label">Profile optimizer</h3>

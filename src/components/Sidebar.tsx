@@ -17,6 +17,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../context/ProfileContext';
 
 const COACH_NAV: Record<string, string> = {
   '/today': 'nav-today',
@@ -37,7 +38,7 @@ const primary = [
   { to: '/networks', label: 'Network', icon: Users },
 ];
 
-const secondary = [
+const secondaryBase = [
   { to: '/resumes', label: 'Resumes', icon: FileText },
   { to: '/linkedin', label: 'LinkedIn', icon: Linkedin },
   { to: '/analytics', label: 'Analytics', icon: BarChart3 },
@@ -82,6 +83,10 @@ function NavItem({
 
 export default function Sidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; onToggle: () => void }) {
   const { logout } = useAuth();
+  const { profile } = useProfile();
+  const secondary = profile?.is_admin
+    ? [...secondaryBase, { to: '/admin', label: 'Admin', icon: Settings }]
+    : secondaryBase;
 
   return (
     <aside className="fixed left-0 top-0 h-full w-[var(--nav-width)] bg-surface/80 backdrop-blur-[20px] border-r border-line/80 flex flex-col z-50 select-none transition-all duration-300">

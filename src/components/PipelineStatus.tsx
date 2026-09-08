@@ -1,10 +1,15 @@
 import { useState } from 'react';
-import { Play, Loader2, Square } from 'lucide-react';
+import { Play, Loader2, Square, RotateCcw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
 import { useAsync } from '../hooks/useAsync';
 import { usePipelinePolling } from '../hooks/usePipelinePolling';
-import { getPipelineRuns, getLlmUsage, triggerPipelineRun, cancelPipelineRun } from '../api/pipeline';
+import {
+  getPipelineRuns,
+  triggerPipelineRun,
+  cancelPipelineRun,
+  continuePipelineRun,
+} from '../api/pipeline';
 import { ApiError } from '../api/client';
 import {
   PIPELINE_STAGE_LABELS,
@@ -31,18 +36,8 @@ export default function PipelineStatus() {
     Boolean(token),
   );
 
-  const llmUsage = useAsync(
-    (signal) => {
-      if (!token) return Promise.reject(new Error('Not authenticated'));
-      return getLlmUsage(token, signal);
-    },
-    [token, trackedRunId],
-    Boolean(token),
-  );
-
   const { run: activeRun } = usePipelinePolling(token, trackedRunId, () => {
     history.refetch();
-    llmUsage.refetch();
     setTrackedRunId(null);
   });
 
@@ -59,6 +54,21 @@ export default function PipelineStatus() {
       history.refetch();
     } catch (err) {
       setTriggerError(err instanceof ApiError ? err.message : 'Failed to start pipeline');
+    } finally {
+      setTriggering(false);
+    }
+  };
+
+  const handleContinue = async () => {
+    if (!token || !profile?.has_active_resume) return;
+    setTriggering(true);
+    setTriggerError(null);
+    try {
+      const run = await continuePipelineRun(token);
+      setTrackedRunId(run.id);
+      history.refetch();
+    } catch (err) {
+      setTriggerError(err instanceof ApiError ? err.message : 'Failed to continue pipeline');
     } finally {
       setTriggering(false);
     }
@@ -82,6 +92,15 @@ export default function PipelineStatus() {
   if (history.loading && !displayRun) return <LoadingState message="Loading pipeline status…" />;
 
   const isRunning = displayRun?.status === 'running';
+  const canContinue =
+    Boolean(profile?.has_active_resume) &&
+    !isRunning &&
+    (displayRun?.status === 'failed' || displayRun?.status === 'cancelled');
+  const continueStage =
+    displayRun?.error_stage ||
+    (displayRun?.current_stage && displayRun.current_stage !== 'complete'
+      ? displayRun.current_stage
+      : null);
 
   return (
     <div className="space-y-8">
@@ -107,12 +126,22 @@ export default function PipelineStatus() {
         </div>
       )}
 
+      {canContinue && (
+        <div className="text-[14px] text-[#8a6d00] bg-[#fff9eb] border border-[#f0d78c] px-4 py-3 rounded-[12px]">
+          Last run {displayRun?.status}
+          {continueStage
+            ? ` at “${PIPELINE_STAGE_LABELS[continueStage as keyof typeof PIPELINE_STAGE_LABELS] ?? continueStage}”`
+            : ''}
+          . Tokens are not charged for failed runs — you can continue from where it stopped.
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-4">
         <button
           type="button"
           disabled={triggering || isRunning || !profile?.has_active_resume}
           onClick={() => void handleRun()}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent-hover text-white text-[14px] font-medium rounded-full px-5 py-2.5 cursor-pointer disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent-hover text-white text-[14px] font-medium rounded-full cursor-pointer disabled:opacity-50"
         >
           {triggering || isRunning ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -121,6 +150,21 @@ export default function PipelineStatus() {
           )}
           {isRunning ? 'Pipeline running…' : 'Run pipeline now'}
         </button>
+        {canContinue && (
+          <button
+            type="button"
+            disabled={triggering || isRunning}
+            onClick={() => void handleContinue()}
+            className="inline-flex items-center gap-2 px-5 py-2.5 border border-accent/40 text-accent text-[14px] font-medium rounded-full cursor-pointer disabled:opacity-50"
+          >
+            {triggering ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RotateCcw className="w-4 h-4" />
+            )}
+            Continue from failure
+          </button>
+        )}
         {isRunning && (
           <button
             type="button"
@@ -145,26 +189,6 @@ export default function PipelineStatus() {
           <MetricsGrid run={displayRun} />
           <ProgressLog entries={displayRun.progress_log} />
         </>
-      )}
-
-      {llmUsage.data && (
-        <section className="sophisticated-card p-5 rounded-xl">
-          <h3 className="text-xs font-mono uppercase tracking-widest text-accent mb-4">
-            LLM usage
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
-            <Stat label="Total calls" value={String(llmUsage.data.total_calls)} />
-            <Stat label="Prompt tokens" value={llmUsage.data.total_prompt_tokens.toLocaleString()} />
-            <Stat
-              label="Completion tokens"
-              value={llmUsage.data.total_completion_tokens.toLocaleString()}
-            />
-            <Stat
-              label="Est. cost (USD)"
-              value={`$${llmUsage.data.estimated_cost_usd.toFixed(4)}`}
-            />
-          </div>
-        </section>
       )}
 
       <section>

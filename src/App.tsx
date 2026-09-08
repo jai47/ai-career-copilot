@@ -14,6 +14,7 @@ import LinkedInCoach from './components/LinkedInCoach';
 import TodayQueue from './components/TodayQueue';
 import PipelineStatus from './components/PipelineStatus';
 import Settings from './components/Settings';
+import AdminPanel from './components/AdminPanel';
 import StoryBank from './components/StoryBank';
 import ChatCoach from './components/ChatCoach';
 import ChatWidget from './components/chat/ChatWidget';
@@ -42,6 +43,7 @@ function ProtectedRoutes() {
             <Route path="coach" element={<ChatCoach />} />
             <Route path="status" element={<PipelineStatus />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="admin" element={<AdminPanel />} />
           </Route>
           <Route path="*" element={<Navigate to="/today" replace />} />
         </Routes>
