@@ -33,6 +33,7 @@ export interface UserProfileResponse {
   nationality: string | null;
   preferred_countries: string[];
   preferred_roles: string[];
+  preferred_locations: string[];
   prefers_remote: boolean;
   salary_range_min: number | null;
   salary_range_max: number | null;
@@ -53,6 +54,7 @@ export interface UserProfileUpdate {
   nationality?: string | null;
   preferred_countries?: string[] | null;
   preferred_roles?: string[] | null;
+  preferred_locations?: string[] | null;
   prefers_remote?: boolean | null;
   salary_range_min?: number | null;
   salary_range_max?: number | null;

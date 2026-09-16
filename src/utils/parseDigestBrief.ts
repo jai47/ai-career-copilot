@@ -32,11 +32,20 @@ export interface DigestTopRecommendation {
   visaReasoning: string;
 }
 
+export interface DigestSmallCompanyPick {
+  title: string;
+  company: string;
+  scaleLabel: string;
+  location: string;
+  score: number;
+}
+
 export interface ParsedDigestBrief {
   date: string | null;
   pipeline: DigestPipelineMetrics;
   trending: DigestTrendingCompany[];
   countries: DigestCountryCount[];
+  smallCompanyPicks: DigestSmallCompanyPick[];
   top: DigestTopRecommendation | null;
 }
 
@@ -101,6 +110,28 @@ function parseCountries(text: string): DigestCountryCount[] {
     .sort((a, b) => b.count - a.count || a.country.localeCompare(b.country));
 }
 
+function parseSmallCompanyPicks(text: string): DigestSmallCompanyPick[] {
+  const block = section(text, 'STARTUPS & SMALL/MID-SIZE COMPANIES');
+  if (!block || /\(none/i.test(block)) return [];
+  return block
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      // "Title @ Company [Startup] — 78/100"
+      const match = line.match(/^(.+?)\s+@\s+(.+?)\s+\[(.+?)\]\s*[—–-]\s*([\d.]+)\/100$/);
+      if (!match) return null;
+      return {
+        title: match[1].trim(),
+        company: match[2].trim(),
+        scaleLabel: match[3].trim(),
+        location: '',
+        score: Number(match[4]),
+      };
+    })
+    .filter((row): row is DigestSmallCompanyPick => row != null);
+}
+
 function parseTop(text: string): DigestTopRecommendation | null {
   const block = section(text, 'TOP RECOMMENDATION');
   if (!block || /^N\/A/i.test(block.trim())) return null;
@@ -145,6 +176,7 @@ function fromMetricsJson(metrics: Record<string, unknown> | null | undefined): P
   const trendingRaw = brief.trending ?? brief.trending_companies;
   const countriesRaw = brief.countries ?? brief.country_breakdown;
   const topRaw = brief.top ?? brief.top_recommendation;
+  const smallCompanyRaw = brief.small_company_picks;
 
   const trending = Array.isArray(trendingRaw)
     ? trendingRaw
@@ -170,6 +202,25 @@ function fromMetricsJson(metrics: Record<string, unknown> | null | undefined): P
           return { country, count };
         })
         .filter((row): row is DigestCountryCount => row != null)
+    : undefined;
+
+  const smallCompanyPicks = Array.isArray(smallCompanyRaw)
+    ? smallCompanyRaw
+        .map((row) => {
+          if (!row || typeof row !== 'object') return null;
+          const item = row as Record<string, unknown>;
+          const title = String(item.title ?? '');
+          const company = String(item.company ?? '');
+          if (!title && !company) return null;
+          return {
+            title,
+            company,
+            scaleLabel: String(item.scale_label ?? item.scaleLabel ?? item.scale ?? ''),
+            location: String(item.location ?? ''),
+            score: num(item.score ?? item.overall_score),
+          };
+        })
+        .filter((row): row is DigestSmallCompanyPick => row != null)
     : undefined;
 
   let top: DigestTopRecommendation | null | undefined;
@@ -201,6 +252,7 @@ function fromMetricsJson(metrics: Record<string, unknown> | null | undefined): P
     },
     trending,
     countries,
+    smallCompanyPicks,
     top,
   };
 }
@@ -215,6 +267,7 @@ export function parseDigestBrief(
     pipeline: parsePipeline(contentText),
     trending: parseTrending(contentText),
     countries: parseCountries(contentText),
+    smallCompanyPicks: parseSmallCompanyPicks(contentText),
     top: parseTop(contentText),
   };
 
@@ -230,6 +283,9 @@ export function parseDigestBrief(
     },
     trending: fromMetrics.trending?.length ? fromMetrics.trending : fromText.trending,
     countries: fromMetrics.countries?.length ? fromMetrics.countries : fromText.countries,
+    smallCompanyPicks: fromMetrics.smallCompanyPicks?.length
+      ? fromMetrics.smallCompanyPicks
+      : fromText.smallCompanyPicks,
     top: fromMetrics.top !== undefined ? fromMetrics.top : fromText.top,
   };
 }

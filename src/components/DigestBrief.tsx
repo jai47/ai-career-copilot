@@ -1,4 +1,4 @@
-import { Building2, Globe2, Sparkles, Target } from 'lucide-react';
+import { Building2, Globe2, Rocket, Sparkles, Target } from 'lucide-react';
 import type { DigestResponse } from '../types';
 import { parseDigestBrief, type ParsedDigestBrief } from '../utils/parseDigestBrief';
 
@@ -188,6 +188,43 @@ function CountryChart({ items }: { items: ParsedDigestBrief['countries'] }) {
   );
 }
 
+function SmallCompanyPicks({ items }: { items: ParsedDigestBrief['smallCompanyPicks'] }) {
+  return (
+    <div className="rounded-[16px] border border-line bg-surface p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <Rocket className="h-4 w-4 text-accent" strokeWidth={1.75} />
+        <h4 className="text-[15px] font-semibold tracking-[-0.02em] text-ink">
+          Startups &amp; smaller companies
+        </h4>
+      </div>
+      {items.length ? (
+        <ul className="space-y-3">
+          {items.map((item) => (
+            <li
+              key={`${item.company}-${item.title}`}
+              className="flex items-baseline justify-between gap-3 text-[14px]"
+            >
+              <span className="min-w-0">
+                <span className="block truncate font-medium text-ink">{item.title}</span>
+                <span className="block truncate text-[13px] text-muted">
+                  {item.company}
+                  {item.scaleLabel ? ` · ${item.scaleLabel}` : ''}
+                  {item.location ? ` · ${item.location}` : ''}
+                </span>
+              </span>
+              <span className="shrink-0 tabular-nums text-muted">{item.score}/100</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-[14px] text-muted">
+          No startup or small-company roles cleared the score threshold today.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function TopPick({ top }: { top: NonNullable<ParsedDigestBrief['top']> }) {
   return (
     <div className="rounded-[16px] border border-accent/25 bg-accent-soft/40 p-6 space-y-4">
@@ -267,6 +304,10 @@ export default function DigestBrief({ digest }: { digest: DigestResponse }) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <CountryChart items={brief.countries} />
+        <SmallCompanyPicks items={brief.smallCompanyPicks} />
+      </div>
+
+      <div className="grid gap-4">
         {brief.top ? (
           <TopPick top={brief.top} />
         ) : (

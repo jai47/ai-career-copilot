@@ -13,6 +13,7 @@ export default function ProfileTab() {
   const [nationality, setNationality] = useState('');
   const [preferredCountries, setPreferredCountries] = useState<string[]>([]);
   const [preferredRoles, setPreferredRoles] = useState<string[]>([]);
+  const [preferredLocations, setPreferredLocations] = useState('');
   const [prefersRemote, setPrefersRemote] = useState(false);
   const [salaryMin, setSalaryMin] = useState('');
   const [salaryMax, setSalaryMax] = useState('');
@@ -30,6 +31,7 @@ export default function ProfileTab() {
     setNationality(profile.nationality ?? '');
     setPreferredCountries(profile.preferred_countries ?? []);
     setPreferredRoles(profile.preferred_roles ?? []);
+    setPreferredLocations((profile.preferred_locations ?? []).join(', '));
     setPrefersRemote(profile.prefers_remote);
     setSalaryMin(profile.salary_range_min != null ? String(profile.salary_range_min) : '');
     setSalaryMax(profile.salary_range_max != null ? String(profile.salary_range_max) : '');
@@ -54,6 +56,10 @@ export default function ProfileTab() {
         nationality: nationality || null,
         preferred_countries: preferredCountries,
         preferred_roles: preferredRoles,
+        preferred_locations: preferredLocations
+          .split(',')
+          .map((city) => city.trim())
+          .filter(Boolean),
         prefers_remote: prefersRemote,
         salary_range_min: salaryMin ? Number(salaryMin) : null,
         salary_range_max: salaryMax ? Number(salaryMax) : null,
@@ -133,6 +139,23 @@ export default function ProfileTab() {
         selected={preferredRoles}
         onChange={setPreferredRoles}
       />
+
+      <div>
+        <label className="text-[14px] font-medium text-slate-400 block mb-1">
+          Preferred cities
+        </label>
+        <input
+          type="text"
+          value={preferredLocations}
+          onChange={(e) => setPreferredLocations(e.target.value)}
+          placeholder="Pune, Bangalore"
+          className="w-full bg-canvas border border-line rounded-xl px-3 py-2 text-xs"
+        />
+        <p className="text-[10px] text-slate-400 mt-1">
+          Comma-separated. Seeded from your resume and used to search locally — jobs in these
+          cities (and their commuter towns) rank above onsite roles elsewhere.
+        </p>
+      </div>
 
       <label className="flex items-center gap-2 text-xs cursor-pointer">
         <input
